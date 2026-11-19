@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tesorería · Grupo Scout Prometeo</title>
+<style>
+:root{color-scheme:light;--rojo:#8b1a2b;--amar:#f2c500;--bg:#fff;--gris:#f6f3ee;--txt:#222;--lin:#e3ddd2}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--txt)}
+header{background:var(--rojo);color:#fff;padding:16px 20px;border-bottom:5px solid var(--amar)}
+header h1{margin:0;font-size:20px} header small{opacity:.85}
+main{max-width:1000px;margin:auto;padding:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.kpi{background:var(--gris);border-radius:10px;padding:12px}.kpi b{display:block;font-size:20px;color:var(--rojo)}
+select,input{padding:7px;border:1px solid var(--lin);border-radius:8px;font:inherit}
+h2{color:var(--rojo);border-bottom:2px solid var(--amar);padding-bottom:4px;margin-top:28px}
+details{border-bottom:1px solid var(--lin)} summary{cursor:pointer;padding:8px 4px;display:flex;gap:8px;align-items:center}
+summary .n{flex:1} .num{text-align:right;min-width:90px;font-variant-numeric:tabular-nums}
+details details{margin-left:18px} .sub{display:flex;gap:8px;padding:6px 4px 6px 22px;border-top:1px dotted var(--lin)}.sub .n{flex:1}
+.bar{height:8px;background:var(--lin);border-radius:4px;overflow:hidden;width:110px}.bar i{display:block;height:100%;background:var(--rojo)}
+.bar.over i{background:#c0392b;outline:2px solid var(--amar)}
+.warn{color:#9a6a00;font-size:12px}
+.tw{overflow-x:auto} table{border-collapse:collapse;width:100%} th,td{padding:6px 8px;border-bottom:1px solid var(--lin);text-align:left;white-space:nowrap}
+th{background:var(--gris)} td.r{text-align:right}
+</style>
+</head>
+<body>
+<header><h1>Grupo Scout Prometeo · Tesorería</h1><small id="meta"></small></header>
+<main>
+<label>Sección: <select id="sec"></select></label>
+<div class="kpis" id="kpis"></div>
+<h2>Presupuesto ejecutado</h2><div id="pres"></div>
+<h2>Movimientos</h2>
+<p><input id="q" placeholder="Buscar concepto, partida, nombre…" size="34"></p>
+<div class="tw"><table id="tab"></table></div>
+</main>
+<script>
+const eur=n=>n.toLocaleString("es-ES",{style:"currency",currency:"EUR"});
+const esc=s=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+let D;
+fetch("data.json").then(r=>r.json()).then(d=>{D=d;
+ document.getElementById("meta").textContent=`Ronda solar ${d.ronda} · actualizado ${d.actualizado}`;
+ const secs=["Todas",...new Set(d.movimientos.map(m=>m.seccion))];
+ const sel=document.getElementById("sec");
+ sel.innerHTML=secs.map(s=>`<option>${esc(s)}</option>`).join("");
+ sel.onchange=pinta;document.getElementById("q").oninput=pinta;pinta();});
+function pinta(){
+ const sec=document.getElementById("sec").value, q=document.getElementById("q").value.toLowerCase();
+ const todos=D.movimientos, ms=todos.filter(m=>sec=="Todas"||m.seccion==sec);
+ const ing=ms.filter(m=>m.tipo=="Ingreso").reduce((a,m)=>a+m.importe,0);
+ const gas=ms.filter(m=>m.tipo=="Gasto").reduce((a,m)=>a+m.importe,0);
+ const saldo=todos.length?todos[todos.length-1].saldo:0; // saldo de cuenta: siempre global
+ document.getElementById("kpis").innerHTML=
+  `<div class="kpi">Saldo en cuenta<b>${eur(saldo)}</b></div><div class="kpi">Ingresos<b>${eur(ing)}</b></div><div class="kpi">Gastos<b>${eur(gas)}</b></div><div class="kpi">Resultado<b>${eur(ing-gas)}</b></div>`;
+ // árbol agrupación > partida > subpartida
+ const T={}, add=(tipo,a,p,s,k,v)=>{const x=((T[tipo]??={})[a]??={})[p]??={};
+   const y=x[s||"—"]??={pres:0,real:0,cal:"",sin:false};y[k]+=v;return y};
+ D.presupuesto.forEach(r=>{const y=add(r.tipo,r.agrupacion,r.partida,r.subpartida,"pres",r.anual);y.cal=r.calendario});
+ ms.forEach(m=>{const y=add(m.tipo,m.concepto,m.partida,m.subpartida,"real",m.importe);
+   if(!D.presupuesto.some(r=>r.tipo==m.tipo&&r.agrupacion==m.concepto&&r.partida==m.partida&&(r.subpartida||"—")==(m.subpartida||"—")))y.sin=true});
+ const sum=o=>Object.values(o).reduce((a,v)=>({pres:a.pres+(v.pres??sum(v).pres),real:a.real+(v.real??sum(v).real)}),{pres:0,real:0});
+ const fila=(t,st)=>{const p=t.pres,r=t.real,pc=p?r/p*100:(r?100:0);
+   return `<span class="num">${eur(r)}</span><span class="num">${eur(p)}</span><span class="bar ${pc>100?'over':''}"><i style="width:${Math.min(pc,100)}%"></i></span><span class="num">${p?pc.toFixed(0)+"%":"—"}</span>`};
+ let h="";
+ for(const tipo of Object.keys(T)){h+=`<h3>${esc(tipo)}s</h3>`;
+  const ags=Object.entries(T[tipo]).sort((a,b)=>sum(b[1]).real-sum(a[1]).real);
+  for(const [a,ps] of ags){const ta=sum(Object.fromEntries(Object.entries(ps).map(([k,v])=>[k,sum(v)])));
+   h+=`<details open><summary><b class="n">${esc(a)}</b>${fila(ta)}</summary>`;
+   const pl=Object.entries(ps).sort((x,y)=>sum(y[1]).real-sum(x[1]).real);
+   for(const [p,ss] of pl){const tp=sum(ss);
+    h+=`<details><summary><span class="n">${esc(p)}</span>${fila(tp)}</summary>`;
+    for(const [s,v] of Object.entries(ss).sort((x,y)=>y[1].real-x[1].real))
+     h+=`<div class="sub"><span class="n">${esc(s)} ${v.cal?`<small>(${v.cal}${v.cal=="Mensual"?": "+eur(v.pres/12)+"/mes":""})</small>`:""}${v.sin?' <span class="warn">⚠ sin presupuestar</span>':""}</span>${fila(v)}</div>`;
+    h+=`</details>`}
+   h+=`</details>`}}
+ document.getElementById("pres").innerHTML=`<p class="warn">Columnas: ejecutado · presupuesto · avance. Importes ordenados de mayor a menor.</p>`+h;
+ const f=ms.filter(m=>!q||Object.values(m).join(" ").toLowerCase().includes(q)).slice().reverse();
+ document.getElementById("tab").innerHTML=`<tr><th>Fecha</th><th>Concepto</th><th>Partida</th><th>Subpartida</th><th>Origen/destino</th><th>Sección</th><th>Tipo</th><th>Importe</th><th>Saldo</th></tr>`+
+  f.map(m=>`<tr><td>${m.fecha.split("-").reverse().join("/")}</td><td>${esc(m.concepto)}</td><td>${esc(m.partida)}</td><td>${esc(m.subpartida)}</td><td>${esc(m.origen)}</td><td>${esc(m.seccion)}</td><td>${esc(m.tipo)}</td><td class="r">${eur(m.importe)}</td><td class="r">${eur(m.saldo)}</td></tr>`).join("");
+}
+</script>
+</body>
+</html>
