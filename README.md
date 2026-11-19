@@ -4,4 +4,3 @@
 3. La web (`docs/index.html`) lee ese JSON.
 
 Publicar: Settings → Pages → Deploy from branch → `main` / carpeta `/docs`.
-Aviso: GitHub Pages es público aunque el repo sea privado. No subas nombres reales (usa los códigos) o protege la web.

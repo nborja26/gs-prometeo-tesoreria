@@ -2,7 +2,6 @@
 import glob, json, re, unicodedata, datetime as dt
 from openpyxl import load_workbook
 
-RONDA = "2026/2027"  # de momento solo esta ronda solar
 
 def norm(s):
     s = unicodedata.normalize("NFD", str(s or "")).encode("ascii", "ignore").decode()
@@ -42,25 +41,23 @@ for f in sorted(glob.glob("datos/*.xlsx")):
 s = lambda v: str(v).strip() if v not in (None, "") else ""
 movimientos = []
 for r in mov:
-    if s(r.get("rondasolar")) != RONDA: continue
+    ronda = s(r.get("rondasolar"))
+    if not ronda: continue
     o = s(r.get("origendestino"))
-    movimientos.append({
-        "n": s(r.get("numeromovimiento")), "fecha": fecha(r.get("fecha")),
-        "concepto": s(r.get("concepto")), "partida": s(r.get("partida")),
-        "subpartida": s(r.get("subpartida")), "importe": abs(num(r.get("importe"))),
-        "tipo": s(r.get("tipo")), "saldo": num(r.get("saldo")),
-        "origen": cod.get(o, o), "seccion": s(r.get("seccion")) or "Grupo",
-        "doc": s(r.get("documento")), "ndoc": s(r.get("numerodocumento")),
-        "obs": s(r.get("observaciones"))})
+    movimientos.append({"ronda": ronda, "n": s(r.get("numeromovimiento")), "fecha": fecha(r.get("fecha")),
+         "concepto": s(r.get("concepto")), "partida": s(r.get("partida")),
+         "subpartida": s(r.get("subpartida")), "importe": abs(num(r.get("importe"))),
+         "tipo": s(r.get("tipo")), "saldo": num(r.get("saldo")),
+         "seccion": s(r.get("seccion")) or "Grupo", "doc": s(r.get("documento")),
+         "origen": cod.get(o, o), "ndoc": s(r.get("numerodocumento"))})  # las observaciones no se publican
 movimientos.sort(key=lambda m: (m["fecha"], m["n"]))
 
 presupuesto = [{
-    "agrupacion": s(r.get("agrupacion")), "tipo": s(r.get("tipo")) or "Gasto",
+    "ronda": s(r.get("ronda")), "agrupacion": s(r.get("agrupacion")), "tipo": s(r.get("tipo")) or "Gasto",
     "partida": s(r.get("partida")), "subpartida": s(r.get("subpartida")),
-    "calendario": s(r.get("calendario")) or "Anual", "anual": num(r.get("importeanual"))}
-    for r in pres if not r.get("ronda") or s(r.get("ronda")) == RONDA]
+    "calendario": s(r.get("calendario")) or "Anual", "anual": num(r.get("importeanual"))} for r in pres]
 
-json.dump({"ronda": RONDA, "actualizado": dt.datetime.now().strftime("%d/%m/%Y %H:%M"),
+json.dump({"actualizado": dt.datetime.now().strftime("%d/%m/%Y %H:%M"),
            "movimientos": movimientos, "presupuesto": presupuesto},
           open("docs/data.json", "w", encoding="utf-8"), ensure_ascii=False)
 print(len(movimientos), "movimientos,", len(presupuesto), "líneas de presupuesto")
