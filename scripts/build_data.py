@@ -55,7 +55,7 @@ movimientos.sort(key=lambda m: (m["fecha"], m["n"]))
 presupuesto = [{
     "ronda": s(r.get("ronda")), "agrupacion": s(r.get("agrupacion")), "tipo": s(r.get("tipo")) or "Gasto",
     "partida": s(r.get("partida")), "subpartida": s(r.get("subpartida")),
-    "calendario": s(r.get("calendario")) or "Anual", "anual": num(r.get("importeanual"))} for r in pres]
+    "calendario": s(r.get("calendario")) or "Anual", "anual": num(r.get("anual"))} for r in pres]
 
 json.dump({"actualizado": dt.datetime.now().strftime("%d/%m/%Y %H:%M"),
            "movimientos": movimientos, "presupuesto": presupuesto},
