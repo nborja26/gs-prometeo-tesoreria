@@ -41,15 +41,15 @@ for f in sorted(glob.glob("datos/*.xlsx")):
 s = lambda v: str(v).strip() if v not in (None, "") else ""
 movimientos = []
 for r in mov:
-    ronda = s(r.get("rondasolar"))
+    ronda = s(r.get("ronda"))
     if not ronda: continue
     o = s(r.get("origendestino"))
-    movimientos.append({"ronda": ronda, "n": s(r.get("numeromovimiento")), "fecha": fecha(r.get("fecha")),
+    movimientos.append({"ronda": ronda, "n": s(r.get("n")), "fecha": fecha(r.get("fecha")),
          "concepto": s(r.get("concepto")), "partida": s(r.get("partida")),
          "subpartida": s(r.get("subpartida")), "importe": abs(num(r.get("importe"))),
          "tipo": s(r.get("tipo")), "saldo": num(r.get("saldo")),
-         "seccion": s(r.get("seccion")) or "Grupo", "doc": s(r.get("documento")),
-         "origen": cod.get(o, o), "ndoc": s(r.get("numerodocumento"))})  # las observaciones no se publican
+         "seccion": s(r.get("seccion")) or "Grupo", "doc": s(r.get("doc")),
+         "origen": s(r.get("origen")), "ndoc": s(r.get("ndoc"))})  # las observaciones no se publican
 movimientos.sort(key=lambda m: (m["fecha"], m["n"]))
 
 presupuesto = [{
