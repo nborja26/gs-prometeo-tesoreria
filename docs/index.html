@@ -31,6 +31,7 @@ th{color:var(--mu);font-weight:600}td.d{text-align:right}
 <div class="tit"><h1>Grupo Scout Prometeo</h1><small>TESORERÍA</small></div>
 <div class="ctl"><select id="ron" title="Ronda solar"></select><select id="sec" title="Sección"></select>
 <button id="ocu">Ocultar importes</button></div></header>
+<p class="warn" id="aviso"></p>
 <div class="kpis" id="kpis"></div>
 <section class="card"><h2>Evolución del saldo</h2><div id="graf"></div></section>
 <section class="card"><h2>Presupuesto ejecutado</h2><p class="mu">Ejecutado · presupuesto · avance. Importes de mayor a menor.</p><div id="pres"></div></section>
@@ -45,7 +46,7 @@ const esc=s=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt
 const fe=s=>s.split("-").reverse().join("/");
 let D;
 fetch("data.json").then(r=>r.json()).then(d=>{D=d;
- const rs=[...new Set(d.movimientos.map(m=>m.ronda))].sort().reverse();
+ const rs=[...new Set([...d.movimientos.map(m=>m.ronda),...d.presupuesto.map(r=>r.ronda)].filter(Boolean))].sort().reverse();
  $("ron").innerHTML=rs.map(r=>`<option>${esc(r)}</option>`).join("");
  const ss=["Manada","Tropa","Unidad","Clan","Kraal","Grupo"].filter(s=>d.movimientos.some(m=>m.seccion==s));
  $("sec").innerHTML=["<option value=''>Todas las secciones</option>",...ss.map(s=>`<option>${s}</option>`)].join("");
@@ -60,6 +61,7 @@ function grafico(a){
  const P=a.map((m,i)=>[X(t[i]),Y(m.saldo)]);
  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto"><g fill="#7a6a5f" font-size="15"><text class="m" x="${L-8}" y="${Y(y1)+5}" text-anchor="end">${f(y1)}</text><text class="m" x="${L-8}" y="${Y(y0)+5}" text-anchor="end">${f(y0)}</text><text x="${L}" y="${H-12}">${fe(a[0].fecha)}</text><text x="${W-R}" y="${H-12}" text-anchor="end">${fe(a[a.length-1].fecha)}</text></g><polyline fill="none" stroke="#6b0e05" stroke-width="3" stroke-linejoin="round" points="${P.map(p=>p.join(",")).join(" ")}"/>${P.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#6b0e05"><title>${fe(a[i].fecha)} · ${f(a[i].saldo)}</title></circle>`).join("")}</svg>`}
 function pinta(){
+ $("aviso").textContent=D.movimientos.length?"":"No hay movimientos en data.json: comprueba que el Excel esté en la carpeta datos/ (no como plantilla.xlsx) y que la Action haya terminado en verde.";
  const ron=$("ron").value,sec=$("sec").value,q=$("q").value.toLowerCase();
  const R=D.movimientos.filter(m=>m.ronda==ron),ms=R.filter(m=>!sec||m.seccion==sec);
  const P=D.presupuesto.filter(r=>!r.ronda||r.ronda==ron);
