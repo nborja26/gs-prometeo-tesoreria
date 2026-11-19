@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tesorería · Grupo Scout Prometeo</title>
+<link rel="icon" href="logo.png"><title>Tesorería · Grupo Scout Prometeo</title>
 <style>
-:root{color-scheme:light;--rojo:#8b1a2b;--amar:#f2c500;--bg:#fff;--gris:#f6f3ee;--txt:#222;--lin:#e3ddd2}
+:root{color-scheme:light;--rojo:#6b0e05;--amar:#e0c55a;--bg:#fff;--gris:#f6f3ee;--txt:#222;--lin:#e3ddd2}
 *{box-sizing:border-box}
 body{margin:0;font:15px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--txt)}
-header{background:var(--rojo);color:#fff;padding:16px 20px;border-bottom:5px solid var(--amar)}
+header{background:var(--rojo);color:#fff;padding:12px 20px;border-bottom:5px solid var(--amar);display:flex;align-items:center;gap:14px}
+header img{width:56px;height:56px}
 header h1{margin:0;font-size:20px} header small{opacity:.85}
 main{max-width:1000px;margin:auto;padding:16px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
@@ -26,7 +27,7 @@ th{background:var(--gris)} td.r{text-align:right}
 </style>
 </head>
 <body>
-<header><h1>Grupo Scout Prometeo · Tesorería</h1><small id="meta"></small></header>
+<header><img src="logo.png" alt="Logo Grupo Scout Prometeo"><div><h1>Grupo Scout Prometeo · Tesorería</h1><small id="meta"></small></div></header>
 <main>
 <label>Sección: <select id="sec"></select></label>
 <div class="kpis" id="kpis"></div>
